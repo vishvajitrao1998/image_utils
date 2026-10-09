@@ -191,7 +191,7 @@ export default function Compressor() {
 
         {/* Actions */}
         <GradientButton
-          label={result ? 'Compress again' : 'Compress image'}
+          label={result ? 'Compress Again' : 'Compress Image'}
           onPress={onCompress}
           loading={busy}
           disabled={!original}

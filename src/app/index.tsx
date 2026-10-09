@@ -3,9 +3,9 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import BrandMark from '../components/BrandMark';
 import GradientButton from '../components/GradientButton';
+import GradientText from '../components/GradientText';
 import { BRAND } from '../constants/tools';
 import { useTheme } from '../theme';
-
 export default function Splash() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function Splash() {
       <Animated.View
         style={{ opacity: textOpacity, transform: [{ translateY: textShift }], alignItems: 'center', marginTop: 28 }}
       >
-        <Text style={[styles.brand, { color: theme.text }]}>{BRAND.name}</Text>
+        <GradientText style={styles.brand}>{BRAND.name}</GradientText>
         <Text style={[styles.tagline, { color: theme.textMuted }]}>{BRAND.tagline}</Text>
       </Animated.View>
 

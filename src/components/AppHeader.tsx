@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND } from '../constants/tools';
 import { useTheme } from '../theme';
 import BrandMark from './BrandMark';
+import GradientText from './GradientText';
 
 type Props = { title?: string; onBack?: () => void };
 
@@ -20,12 +21,12 @@ export default function AppHeader({ title, onBack }: Props) {
           <Pressable onPress={onBack} hitSlop={8} style={roundBtn}>
             <Ionicons name="chevron-back" size={22} color={theme.text} />
           </Pressable>
-          <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+          <GradientText style={styles.title}>{title}</GradientText>
         </View>
       ) : (
         <View style={styles.left}>
           <BrandMark size={36} />
-          <Text style={[styles.title, { color: theme.text }]}>{BRAND.name}</Text>
+          <GradientText style={styles.title}>{BRAND.name}</GradientText>
         </View>
       )}
 
