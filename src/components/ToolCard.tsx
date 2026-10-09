@@ -26,6 +26,6 @@ export default function ToolCard({ tool, onPress }: { tool: Tool; onPress: () =>
 const styles = StyleSheet.create({
   card: { flex: 1, borderRadius: 22, borderWidth: 1, padding: 18, minHeight: 150, justifyContent: 'flex-end' },
   iconTile: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 'auto' },
-  title: { fontSize: 17, fontWeight: '700', marginTop: 14 },
+  title: { fontSize: 18, fontWeight: '700', marginTop: 14 },
   sub: { fontSize: 13, marginTop: 2 },
 });

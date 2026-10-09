@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '../components/AppHeader';
+import GradientText from '../components/GradientText';
 import ToolCard from '../components/ToolCard';
 import { TOOLS } from '../constants/tools';
 import { useTheme } from '../theme';
@@ -20,8 +21,8 @@ export default function Home() {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <View style={{ marginBottom: 20 }}>
-            <Text style={[styles.h1, { color: theme.text }]}>Image tools</Text>
-            <Text style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>Pick a tool to get started</Text>
+            <GradientText style={[styles.h1, { color: theme.text }]}>Image Utilities</GradientText>
+            <Text style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>Making image processing easy!</Text>
           </View>
         }
         renderItem={({ item }) => (

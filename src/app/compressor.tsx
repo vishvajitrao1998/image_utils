@@ -71,7 +71,7 @@ export default function Compressor() {
     if (!result) return;
     try {
       // Loaded lazily so the screen still works where the native module is missing (e.g. Expo Go)
-      const MediaLibrary = await import('expo-media-library');
+      const MediaLibrary = await import('expo-media-library/legacy');
       const perm = await MediaLibrary.requestPermissionsAsync(true);
       if (!perm.granted) {
         Alert.alert('Permission needed', 'Allow access to save images to your gallery.');
@@ -100,7 +100,7 @@ export default function Compressor() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <AppHeader title="Compress" onBack={() => router.back()} />
+      <AppHeader title="Image Compressor" onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Picker / preview */}
