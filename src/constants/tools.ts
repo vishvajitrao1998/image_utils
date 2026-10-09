@@ -15,7 +15,7 @@ export const TOOLS: Tool[] = [
   { id: 'compress', title: 'Compress', subtitle: 'Reduce file size', icon: 'contract-outline', route: '/compressor' },
   { id: 'resize', title: 'Resize', subtitle: 'Change dimensions', icon: 'resize-outline', route: '/resize' },
   { id: 'convert', title: 'Convert', subtitle: 'JPG, PNG, WebP, BMP', icon: 'swap-horizontal-outline', route: '/convert' },
-  { id: 'crop', title: 'Crop', subtitle: 'Trim to fit', icon: 'crop-outline' },
-  { id: 'rotate', title: 'Rotate & Flip', subtitle: 'Fix orientation', icon: 'sync-outline' },
-  { id: 'watermark', title: 'Watermark', subtitle: 'Protect your work', icon: 'water-outline' },
+  { id: 'crop', title: 'Crop', subtitle: 'Trim to fit', icon: 'crop-outline', route: '/crop' },
+  { id: 'rotate', title: 'Rotate & Flip', subtitle: 'Fix orientation', icon: 'sync-outline', route: '/rotate' },
+  { id: 'watermark', title: 'Watermark', subtitle: 'Protect your work', icon: 'water-outline', route: '/watermark' },
 ];
