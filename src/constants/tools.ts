@@ -21,5 +21,5 @@ export const TOOLS: Tool[] = [
   { id: 'grayscale', title: 'Image to Grayscale', subtitle: 'Convert Your Images to Black & white', icon: 'contrast-outline', route: '/grayscale' },
   { id: 'text', title: 'Add Text on Image', subtitle: 'Add Stylish text on your Images', icon: 'text-outline', route: '/addtext' },
   { id: 'merge', title: 'Images Merger', subtitle: 'Combine Multiple Images in Single Image', icon: 'albums-outline', route: '/merge' },
-  { id: 'sketch', title: 'Image Sketch', subtitle: 'Pencil & ink art', icon: 'brush-outline', route: '/sketch' },
+  { id: 'sketch', title: 'Image to Sketch', subtitle: 'Convert your Image to Pencil & ink art', icon: 'brush-outline', route: '/sketch' },
 ];
