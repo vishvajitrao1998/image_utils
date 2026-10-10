@@ -18,4 +18,5 @@ export const TOOLS: Tool[] = [
   { id: 'crop', title: 'Crop', subtitle: 'Trim to fit', icon: 'crop-outline', route: '/crop' },
   { id: 'rotate', title: 'Rotate & Flip', subtitle: 'Fix orientation', icon: 'sync-outline', route: '/rotate' },
   { id: 'watermark', title: 'Watermark', subtitle: 'Protect your work', icon: 'water-outline', route: '/watermark' },
+  { id: 'grayscale', title: 'Grayscale', subtitle: 'Black & white', icon: 'contrast-outline', route: '/grayscale' },
 ];

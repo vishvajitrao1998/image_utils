@@ -6,6 +6,8 @@ import ToolCard from '../components/ToolCard';
 import { TOOLS } from '../constants/tools';
 import { useTheme } from '../theme';
 
+const data = TOOLS.length % 2 === 0 ? TOOLS : [...TOOLS, { id: '__spacer' } as any];
+
 export default function Home() {
   const { theme } = useTheme();
   const router = useRouter();
@@ -25,13 +27,20 @@ export default function Home() {
             <Text style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>Making image processing easy!</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <ToolCard tool={item} onPress={() => item.route && router.push(item.route as any)} />
-        )}
+        renderItem={({ item }) =>
+          item.id === '__spacer' ? (
+            <View style={{ flex: 1 }} />
+          ) : (
+            <ToolCard tool={item} onPress={() => item.route && router.push(item.route as any)} />
+          )
+        }
       />
     </View>
   );
 }
+
+
+
 
 const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },

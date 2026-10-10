@@ -3,34 +3,34 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Image,
-    PixelRatio,
-    Pressable, ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
-    useWindowDimensions,
+  Alert,
+  Image,
+  PixelRatio,
+  Pressable, ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import AppHeader from '../components/AppHeader';
+import ColorPicker from '../components/ColorPicker';
 import GradientButton from '../components/GradientButton';
 import ImageDropzone from '../components/ImageDropzone';
 import OutlineButton from '../components/OutlineButton';
 import Segmented from '../components/Segmented';
 import Stat from '../components/Stat';
-import WatermarkLayer, { WatermarkConfig, WatermarkPosition, hasWatermark } from '../components/WatermarkLayer';
+import WatermarkLayer, { WatermarkConfig, hasWatermark } from '../components/WatermarkLayer';
 import { PickedImage, pickImage, saveToGallery, shareImage } from '../services/imageActions';
 import { getFileSize } from '../services/imageCompressor';
 import { useTheme } from '../theme';
 import { formatBytes, getImageFormat } from '../utils/format';
 
-const MAX_SIDE = 4096; // longest side of the exported image
+const MAX_SIDE = 3000; // longest side of the exported image (keeps memory use safe)
 const MAX_PREVIEW_H = 360;
-const COLORS = ['#FFFFFF', '#111111', '#8B5CF6', '#FF6B5E', '#FACC15'];
 
 const DEFAULT: WatermarkConfig = {
   kind: 'text',
@@ -41,7 +41,8 @@ const DEFAULT: WatermarkConfig = {
   sizePct: 6,
   opacity: 0.7,
   rotation: 0,
-  position: 'br',
+  px: 1,
+  py: 1,
   tile: false,
 };
 
@@ -60,9 +61,11 @@ export default function Watermark() {
   const [original, setOriginal] = useState<PickedImage | null>(null);
   const [config, setConfig] = useState<WatermarkConfig>(DEFAULT);
   const [result, setResult] = useState<Result | null>(null);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   const [exporting, setExporting] = useState(false);
   const [exportLoaded, setExportLoaded] = useState(false);
+  const [layerReady, setLayerReady] = useState(false);
   const exportRef = useRef<View>(null);
 
   const update = (patch: Partial<WatermarkConfig>) => setConfig((c) => ({ ...c, ...patch }));
@@ -82,8 +85,7 @@ export default function Watermark() {
     update({ logoUri: img.uri, logoAspect: img.width / img.height });
   };
 
-  const onChangeKind = (kind: 'text' | 'logo') =>
-    update({ kind, sizePct: kind === 'text' ? 6 : 25 });
+  const onChangeKind = (kind: 'text' | 'logo') => update({ kind, sizePct: kind === 'text' ? 6 : 25 });
 
   const onToggleTile = (tile: boolean) =>
     update({ tile, rotation: tile && config.rotation === 0 ? -30 : config.rotation });
@@ -99,24 +101,29 @@ export default function Watermark() {
   const onApply = () => {
     if (!original || !hasWatermark(config)) return;
     setExportLoaded(false);
+    setLayerReady(false);
     setExporting(true);
   };
 
   useEffect(() => {
-    if (!exporting || !exportLoaded) return;
+    if (!exporting || !exportLoaded || !layerReady) return;
     let cancelled = false;
     (async () => {
       try {
-        await new Promise((r) => setTimeout(r, 250)); // let the hidden view finish laying out
-        const uri = await captureRef(exportRef, {
+        await new Promise((r) => setTimeout(r, 300)); // let the hidden view finish drawing
+        const raw = await captureRef(exportRef, {
           format: isPng ? 'png' : 'jpg',
           quality: 0.95,
           result: 'tmpfile',
         });
+        const uri = raw.startsWith('file://') || raw.startsWith('data:') ? raw : `file://${raw}`;
         const [dims, size] = await Promise.all([imageSize(uri), getFileSize(uri)]);
         if (!cancelled) setResult({ uri, width: dims.width, height: dims.height, size });
-      } catch {
-        if (!cancelled) Alert.alert('Failed', 'Could not add the watermark to this image.');
+      } catch (e: any) {
+        console.warn('Watermark export failed', e);
+        if (!cancelled) {
+          Alert.alert('Failed', `Could not add the watermark.\n\n${e?.message ?? String(e)}`);
+        }
       } finally {
         if (!cancelled) setExporting(false);
       }
@@ -124,7 +131,7 @@ export default function Watermark() {
     return () => {
       cancelled = true;
     };
-  }, [exporting, exportLoaded]);
+  }, [exporting, exportLoaded, layerReady]);
 
   /* ---------- preview size ---------- */
   const previewMaxW = screenW - 40;
@@ -143,6 +150,7 @@ export default function Watermark() {
       <AppHeader title="Watermark" onBack={() => router.back()} />
 
       <ScrollView
+        scrollEnabled={scrollEnabled}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -179,18 +187,29 @@ export default function Watermark() {
         ) : (
           /* ---------- Editor ---------- */
           <>
-            {/* Live preview */}
+            {/* Live preview: drag the watermark to move it */}
             <View style={[styles.box, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={{ width: pw, height: ph, overflow: 'hidden' }}>
                 <Image source={{ uri: original.uri }} style={{ width: pw, height: ph }} resizeMode="stretch" />
-                <WatermarkLayer width={pw} height={ph} config={config} />
+                <WatermarkLayer
+                  width={pw}
+                  height={ph}
+                  config={config}
+                  draggable={!config.tile}
+                  showHandles={!config.tile}
+                  onMove={(px, py) => update({ px, py })}
+                  onDragState={(active) => setScrollEnabled(!active)}
+                />
               </View>
             </View>
 
             <View style={styles.metaRow}>
-              <Text style={{ color: theme.textMuted, fontSize: 13 }}>
-                {original.width} × {original.height} px
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                <Ionicons name="move-outline" size={15} color={theme.textMuted} />
+                <Text style={{ color: theme.textMuted, fontSize: 13, flex: 1 }}>
+                  {config.tile ? 'Turn off Tile to drag the watermark' : 'Drag the watermark to move it'}
+                </Text>
+              </View>
               <Pressable onPress={onPick} hitSlop={8}>
                 <Text style={{ color: theme.text, fontWeight: '700', fontSize: 14 }}>Change</Text>
               </Pressable>
@@ -219,23 +238,7 @@ export default function Watermark() {
                   />
 
                   <Text style={[styles.label, { color: theme.text, marginTop: 18 }]}>Color</Text>
-                  <View style={styles.swatches}>
-                    {COLORS.map((c) => {
-                      const active = config.color === c;
-                      return (
-                        <Pressable
-                          key={c}
-                          onPress={() => update({ color: c })}
-                          style={[
-                            styles.swatch,
-                            { borderColor: active ? theme.text : theme.border, borderWidth: active ? 3 : 1 },
-                          ]}
-                        >
-                          <View style={{ flex: 1, borderRadius: 16, backgroundColor: c }} />
-                        </Pressable>
-                      );
-                    })}
-                  </View>
+                  <ColorPicker value={config.color} onChange={(color) => update({ color })} />
                 </View>
               ) : (
                 <View style={{ marginTop: 18 }}>
@@ -288,11 +291,16 @@ export default function Watermark() {
                 onChange={(v) => update({ rotation: v })}
               />
 
-              {/* Position + tile */}
+              {/* Position presets + tile */}
               <View style={styles.positionRow}>
                 <View>
-                  <Text style={[styles.label, { color: theme.text, marginBottom: 10 }]}>Position</Text>
-                  <PositionGrid value={config.position} onChange={(p) => update({ position: p })} disabled={config.tile} />
+                  <Text style={[styles.label, { color: theme.text, marginBottom: 10 }]}>Quick position</Text>
+                  <PositionGrid
+                    px={config.px}
+                    py={config.py}
+                    onChange={(px, py) => update({ px, py })}
+                    disabled={config.tile}
+                  />
                 </View>
                 <View style={{ flex: 1, paddingLeft: 20 }}>
                   <View style={styles.rowBetween}>
@@ -312,7 +320,7 @@ export default function Watermark() {
             </View>
 
             <GradientButton
-              label="Add watermark"
+              label="Add Watermark"
               onPress={onApply}
               loading={exporting}
               disabled={!hasWatermark(config)}
@@ -331,7 +339,7 @@ export default function Watermark() {
               resizeMode="stretch"
               onLoad={() => setExportLoaded(true)}
             />
-            <WatermarkLayer width={expW} height={expH} config={config} />
+            <WatermarkLayer width={expW} height={expH} config={config} onReady={() => setLayerReady(true)} />
           </View>
         </View>
       )}
@@ -370,9 +378,10 @@ function LabeledSlider({
 }
 
 function PositionGrid({
-  value, onChange, disabled,
-}: { value: WatermarkPosition; onChange: (p: WatermarkPosition) => void; disabled?: boolean }) {
+  px, py, onChange, disabled,
+}: { px: number; py: number; onChange: (px: number, py: number) => void; disabled?: boolean }) {
   const { theme } = useTheme();
+  const steps = [0, 0.5, 1];
   return (
     <View
       style={{
@@ -380,16 +389,15 @@ function PositionGrid({
         backgroundColor: theme.surfaceAlt, borderColor: theme.border, opacity: disabled ? 0.4 : 1,
       }}
     >
-      {(['t', 'm', 'b'] as const).map((r) => (
-        <View key={r} style={{ flexDirection: 'row' }}>
-          {(['l', 'c', 'r'] as const).map((c) => {
-            const id = `${r}${c}` as WatermarkPosition;
-            const active = value === id;
+      {steps.map((y) => (
+        <View key={y} style={{ flexDirection: 'row' }}>
+          {steps.map((x) => {
+            const active = Math.abs(px - x) < 0.01 && Math.abs(py - y) < 0.01;
             return (
               <Pressable
-                key={id}
+                key={x}
                 disabled={disabled}
-                onPress={() => onChange(id)}
+                onPress={() => onChange(x, y)}
                 style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
               >
                 <View
@@ -410,13 +418,11 @@ function PositionGrid({
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 48, gap: 16 },
   box: { borderRadius: 24, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingHorizontal: 4 },
   card: { borderRadius: 24, borderWidth: 1, padding: 20 },
   label: { fontSize: 15, fontWeight: '700' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   input: { height: 48, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, fontSize: 16, marginTop: 10 },
-  swatches: { flexDirection: 'row', gap: 12, marginTop: 10 },
-  swatch: { width: 38, height: 38, borderRadius: 19, padding: 3 },
   logoPicker: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: 18, padding: 14 },
   logoThumb: { width: 48, height: 48 },
   positionRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 22 },
