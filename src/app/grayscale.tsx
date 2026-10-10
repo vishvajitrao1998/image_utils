@@ -103,7 +103,7 @@ export default function Grayscale() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <AppHeader title="Grayscale" onBack={() => router.back()} />
+      <AppHeader title="Image to Grayscale" onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {preparing ? (

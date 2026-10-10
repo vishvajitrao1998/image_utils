@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import GradientText from '../components/GradientText';
 import type { Tool } from '../constants/tools';
 import { useTheme } from '../theme';
-
 export default function ToolCard({ tool, onPress }: { tool: Tool; onPress: () => void }) {
   const { theme } = useTheme();
   const soon = !tool.route;
@@ -15,7 +15,7 @@ export default function ToolCard({ tool, onPress }: { tool: Tool; onPress: () =>
       ]}
     >
       <View style={[styles.iconTile, { backgroundColor: theme.surfaceAlt }]}>
-        <Ionicons name={tool.icon} size={26} color={theme.text} />
+        <GradientText style={[{ color: theme.text }]}><Ionicons name={tool.icon} size={26} color={theme.text} /></GradientText>
       </View>
       <Text style={[styles.title, { color: theme.text }]}>{tool.title}</Text>
       <Text style={[styles.sub, { color: theme.textMuted }]}>{soon ? 'Coming soon' : tool.subtitle}</Text>
@@ -28,4 +28,5 @@ const styles = StyleSheet.create({
   iconTile: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 'auto' },
   title: { fontSize: 18, fontWeight: '700', marginTop: 14 },
   sub: { fontSize: 13, marginTop: 2 },
+
 });

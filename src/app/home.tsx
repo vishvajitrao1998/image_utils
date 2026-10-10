@@ -24,7 +24,7 @@ export default function Home() {
         ListHeaderComponent={
           <View style={{ marginBottom: 20 }}>
             <GradientText style={[styles.h1, { color: theme.text }]}>Image Utilities</GradientText>
-            <Text style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>Making image processing easy!</Text>
+            <Text style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>Making Image processing easy!</Text>
           </View>
         }
         renderItem={({ item }) =>
