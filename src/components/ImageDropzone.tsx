@@ -2,15 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme';
 
-export default function ImageDropzone({ onPress }: { onPress: () => void }) {
+type Props = { onPress: () => void; title?: string; subtitle?: string };
+
+export default function ImageDropzone({ onPress, title = 'Choose an image', subtitle = 'Tap to pick from your gallery' }: Props) {
   const { theme } = useTheme();
   return (
     <Pressable onPress={onPress} style={[styles.zone, { borderColor: theme.border, backgroundColor: theme.surface }]}>
       <View style={[styles.icon, { backgroundColor: theme.surfaceAlt }]}>
         <Ionicons name="cloud-upload-outline" size={30} color={theme.text} />
       </View>
-      <Text style={{ color: theme.text, fontSize: 18, fontWeight: '700' }}>Choose an image</Text>
-      <Text style={{ color: theme.textMuted, marginTop: 4 }}>Tap to pick from your gallery</Text>
+      <Text style={{ color: theme.text, fontSize: 18, fontWeight: '700' }}>{title}</Text>
+      <Text style={{ color: theme.textMuted, marginTop: 4 }}>{subtitle}</Text>
     </Pressable>
   );
 }

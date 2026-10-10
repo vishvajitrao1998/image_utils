@@ -20,4 +20,5 @@ export const TOOLS: Tool[] = [
   { id: 'watermark', title: 'Watermark on Image', subtitle: 'Add watermark on your Image', icon: 'water-outline', route: '/watermark' },
   { id: 'grayscale', title: 'Image to Grayscale', subtitle: 'Convert Your Images to Black & white', icon: 'contrast-outline', route: '/grayscale' },
   { id: 'text', title: 'Add Text on Image', subtitle: 'Add Stylish text on your Images', icon: 'text-outline', route: '/addtext' },
+  { id: 'merge', title: 'Images Merger', subtitle: 'Combine Multiple Images in Single Image', icon: 'albums-outline', route: '/merge' },
 ];

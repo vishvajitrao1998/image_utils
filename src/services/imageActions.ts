@@ -11,12 +11,38 @@ export type PickedImage = {
   mimeType?: string;
   name?: string;
 };
+
+type Asset = ImagePicker.ImagePickerAsset;
+
+async function toPicked(a: Asset): Promise<PickedImage> {
+  return {
+    uri: a.uri,
+    width: a.width,
+    height: a.height,
+    size: a.fileSize ?? (await getFileSize(a.uri)),
+    mimeType: a.mimeType ?? undefined,
+    name: a.fileName ?? undefined,
+  };
+}
+
+// Single image (used by most tools)
 export async function pickImage(): Promise<PickedImage | null> {
   const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
   if (res.canceled) return null;
-  const a = res.assets[0];
-  const size = a.fileSize ?? (await getFileSize(a.uri));
-  return { uri: a.uri, width: a.width, height: a.height, size, mimeType: a.mimeType ?? undefined, name: a.fileName ?? undefined };
+  return toPicked(res.assets[0]);
+}
+
+// Several images (used by Merge)
+export async function pickImages(limit = 20): Promise<PickedImage[]> {
+  const res = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    orderedSelection: true,
+    selectionLimit: limit,
+    quality: 1,
+  });
+  if (res.canceled) return [];
+  return Promise.all(res.assets.map(toPicked));
 }
 
 export async function shareImage(uri: string) {
@@ -25,7 +51,7 @@ export async function shareImage(uri: string) {
 
 export async function saveToGallery(uri: string) {
   try {
-    const MediaLibrary = await import('expo-media-library/legacy'); // lazy: not available in Expo Go
+    const MediaLibrary = require('expo-media-library/legacy'); // lazy: not available in Expo Go
     const perm = await MediaLibrary.requestPermissionsAsync(true);
     if (!perm.granted) {
       Alert.alert('Permission needed', 'Allow access to save images to your gallery.');
