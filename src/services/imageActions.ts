@@ -58,7 +58,7 @@ export async function saveToGallery(uri: string) {
       return;
     }
     await MediaLibrary.saveToLibraryAsync(uri);
-    Alert.alert('Saved', 'The image was saved to your gallery.');
+    Alert.alert('Saved', 'Image is saved to your Gallery.');
   } catch {
     Alert.alert(
       'Gallery saving unavailable',

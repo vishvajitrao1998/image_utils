@@ -147,7 +147,7 @@ export default function RotateFlip() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="sync-outline" label="Edit again" onPress={() => setResult(null)} />
+              <OutlineButton icon="sync-outline" label="Edit Again" onPress={() => setResult(null)} />
               <OutlineButton icon="images-outline" label="New image" onPress={onPick} />
             </View>
           </>

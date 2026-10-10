@@ -155,7 +155,7 @@ export default function Crop() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="crop-outline" label="Crop again" onPress={() => setResult(null)} />
+              <OutlineButton icon="crop-outline" label="Crop Again" onPress={() => setResult(null)} />
               <OutlineButton icon="images-outline" label="New image" onPress={onPick} />
             </View>
           </>

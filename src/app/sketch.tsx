@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import { Canvas, ColorMatrix, Image as SkImage, useImage } from '@shopify/react-native-skia';
+import { Blur, Canvas, ColorMatrix, Group, Paint, Image as SkImage, useImage } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -7,6 +7,7 @@ import {
   Alert,
   Image, Pressable, ScrollView,
   StyleSheet,
+  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -19,38 +20,50 @@ import ImageDropzone from '../components/ImageDropzone';
 import OutlineButton from '../components/OutlineButton';
 import Stat from '../components/Stat';
 import { PickedImage, pickImage, saveToGallery, shareImage } from '../services/imageActions';
-import { exportGrayscale, GrayResult, normalizeImage } from '../services/imageGrayscale';
+import { prepareImage } from '../services/imageMerger';
+import { exportSketch, SketchResult } from '../services/imageSketch';
 import { useTheme } from '../theme';
 import { formatBytes, getImageFormat } from '../utils/format';
-import { buildGrayMatrix, GRAY_METHODS, GrayMethod } from '../utils/grayMatrix';
+import { buildSketchMatrices, Paper, SketchParams, sketchSigmaFraction, SketchStyle } from '../utils/sketchMatrix';
 
-const MAX_PREVIEW_H = 360;
+const MAX_PREVIEW_H = 380;
 
-export default function Grayscale() {
+const STYLES: { id: SketchStyle; label: string }[] = [
+  { id: 'pencil', label: 'Pencil' },
+  { id: 'color', label: 'Color' },
+  { id: 'ink', label: 'Ink' },
+];
+
+const PAPERS: { id: Paper; label: string }[] = [
+  { id: 'white', label: 'White' },
+  { id: 'cream', label: 'Cream' },
+  { id: 'cool', label: 'Cool' },
+];
+
+export default function Sketch() {
   const { theme } = useTheme();
   const router = useRouter();
   const { width: screenW } = useWindowDimensions();
 
-  const [original, setOriginal] = useState<PickedImage | null>(null); // uri points at the normalized copy
+  const [original, setOriginal] = useState<PickedImage | null>(null); // uri = prepared copy
   const [originalSize, setOriginalSize] = useState(0);
   const [preparing, setPreparing] = useState(false);
 
-  const [method, setMethod] = useState<GrayMethod>('natural');
-  const [amount, setAmount] = useState(1);
-  const [contrast, setContrast] = useState(1);
-  const [brightness, setBrightness] = useState(0);
+  const [style, setStyle] = useState<SketchStyle>('pencil');
+  const [thickness, setThickness] = useState(3);
+  const [darkness, setDarkness] = useState(1.2);
+  const [paper, setPaper] = useState<Paper>('white');
+  const [chalk, setChalk] = useState(false);
   const [format, setFormat] = useState<'jpeg' | 'png'>('jpeg');
 
   const [holding, setHolding] = useState(false);
-  const [result, setResult] = useState<GrayResult | null>(null);
+  const [result, setResult] = useState<SketchResult | null>(null);
   const [busy, setBusy] = useState(false);
 
   const skImage = useImage(original?.uri);
 
-  const matrix = useMemo(() => {
-    const weights = GRAY_METHODS.find((m) => m.id === method)!.weights;
-    return buildGrayMatrix(weights, amount, contrast, brightness);
-  }, [method, amount, contrast, brightness]);
+  const params: SketchParams = { style, thickness, darkness, paper, chalk };
+  const mats = useMemo(() => buildSketchMatrices(params), [style, thickness, darkness, paper, chalk]);
 
   const onPick = async () => {
     const img = await pickImage();
@@ -58,8 +71,8 @@ export default function Grayscale() {
     try {
       setPreparing(true);
       const isPng = getImageFormat(img) === 'PNG';
-      const norm = await normalizeImage(img.uri, isPng);
-      setOriginal({ ...img, uri: norm.uri, width: norm.width, height: norm.height });
+      const prepared = await prepareImage(img, isPng);
+      setOriginal({ ...img, ...prepared });
       setOriginalSize(img.size);
       setFormat(isPng ? 'png' : 'jpeg');
       setResult(null);
@@ -71,20 +84,21 @@ export default function Grayscale() {
   };
 
   const onReset = () => {
-    setMethod('natural');
-    setAmount(1);
-    setContrast(1);
-    setBrightness(0);
+    setStyle('pencil');
+    setThickness(3);
+    setDarkness(1.2);
+    setPaper('white');
+    setChalk(false);
   };
 
-  const onConvert = async () => {
+  const onCreate = async () => {
     if (!original) return;
     try {
       setBusy(true);
-      setResult(await exportGrayscale({ uri: original.uri, matrix, format }));
+      setResult(await exportSketch({ uri: original.uri, params, format }));
     } catch (e: any) {
-      console.warn('Grayscale export failed', e);
-      Alert.alert('Conversion failed', e?.message ?? 'Something went wrong while converting this image.');
+      console.warn('Sketch export failed', e);
+      Alert.alert('Failed', e?.message ?? 'Something went wrong while creating the sketch.');
     } finally {
       setBusy(false);
     }
@@ -98,12 +112,13 @@ export default function Grayscale() {
     pw = original.width * s;
     ph = original.height * s;
   }
+  const sigma = Math.max(0.5, sketchSigmaFraction(thickness) * pw);
 
   const change = result && originalSize ? Math.round((result.size / originalSize - 1) * 100) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <AppHeader title="Image to Grayscale" onBack={() => router.back()} />
+      <AppHeader title="Sketch" onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {preparing ? (
@@ -119,14 +134,14 @@ export default function Grayscale() {
             <View style={[styles.box, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <Image
                 source={{ uri: result.uri }}
-                style={{ width: '100%', aspectRatio: result.width / result.height, maxHeight: 360 }}
+                style={{ width: '100%', aspectRatio: result.width / result.height, maxHeight: 420 }}
                 resizeMode="contain"
               />
             </View>
 
             <View style={styles.statsRow}>
               <Stat label="Original" value={formatBytes(originalSize)} />
-              <Stat label="Grayscale" value={formatBytes(result.size)} />
+              <Stat label="Sketch" value={formatBytes(result.size)} />
               <Stat label="Change" value={`${change > 0 ? '+' : ''}${change}%`} />
             </View>
 
@@ -135,8 +150,8 @@ export default function Grayscale() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="contrast-outline" label="Edit Again" onPress={() => setResult(null)} />
-              <OutlineButton icon="images-outline" label="New Image" onPress={onPick} />
+              <OutlineButton icon="brush-outline" label="Edit Again" onPress={() => setResult(null)} />
+              <OutlineButton icon="images-outline" label="New image" onPress={onPick} />
             </View>
           </>
         ) : (
@@ -148,11 +163,20 @@ export default function Grayscale() {
               style={[styles.box, { backgroundColor: theme.surface, borderColor: theme.border }]}
             >
               <Canvas style={{ width: pw, height: ph }}>
-                {skImage && (
-                  <SkImage image={skImage} x={0} y={0} width={pw} height={ph} fit="fill">
-                    {!holding && <ColorMatrix matrix={matrix} />}
-                  </SkImage>
-                )}
+                {skImage &&
+                  (holding ? (
+                    <SkImage image={skImage} x={0} y={0} width={pw} height={ph} fit="fill" />
+                  ) : (
+                    <Group layer={<Paint><ColorMatrix matrix={mats.final} /></Paint>}>
+                      <SkImage image={skImage} x={0} y={0} width={pw} height={ph} fit="fill">
+                        <ColorMatrix matrix={mats.base} />
+                      </SkImage>
+                      <SkImage image={skImage} x={0} y={0} width={pw} height={ph} fit="fill" blendMode="colorDodge">
+                        <ColorMatrix matrix={mats.dodge} />
+                        <Blur blur={sigma} mode="clamp" />
+                      </SkImage>
+                    </Group>
+                  ))}
               </Canvas>
               <View style={[styles.badge, { backgroundColor: theme.bg }]}>
                 <Text style={{ color: theme.text, fontSize: 12, fontWeight: '700' }}>
@@ -176,43 +200,62 @@ export default function Grayscale() {
             </View>
 
             <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <Text style={[styles.label, { color: theme.text }]}>Method</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Style</Text>
               <View style={styles.chips}>
-                {GRAY_METHODS.map((m) => (
-                  <Chip key={m.id} label={m.label} selected={method === m.id} onPress={() => setMethod(m.id)} />
+                {STYLES.map((s) => (
+                  <Chip key={s.id} label={s.label} selected={style === s.id} onPress={() => setStyle(s.id)} />
                 ))}
               </View>
               <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 10 }}>
-                Color filters mimic black-and-white photography: a red filter darkens skies and brightens skin.
+                {style === 'pencil' && 'A graphite pencil drawing in shades of gray.'}
+                {style === 'color' && 'A colored-pencil look that keeps the photo colors.'}
+                {style === 'ink' && 'Bold black ink lines on white, like a line drawing.'}
               </Text>
 
               <LabeledSlider
-                label="Amount"
-                valueText={`${Math.round(amount * 100)}%`}
-                min={0}
-                max={1}
-                step={0.05}
-                value={amount}
-                onChange={setAmount}
+                label="Line thickness"
+                valueText={`${thickness}`}
+                min={1}
+                max={10}
+                step={1}
+                value={thickness}
+                onChange={setThickness}
               />
               <LabeledSlider
-                label="Contrast"
-                valueText={`${Math.round(contrast * 100)}%`}
+                label="Darkness"
+                valueText={`${Math.round(darkness * 100)}%`}
                 min={0.5}
-                max={1.5}
-                step={0.05}
-                value={contrast}
-                onChange={setContrast}
+                max={3}
+                step={0.1}
+                value={darkness}
+                onChange={setDarkness}
               />
-              <LabeledSlider
-                label="Brightness"
-                valueText={`${brightness > 0 ? '+' : ''}${Math.round(brightness * 100)}`}
-                min={-0.3}
-                max={0.3}
-                step={0.02}
-                value={brightness}
-                onChange={setBrightness}
-              />
+
+              {!chalk && (
+                <>
+                  <Text style={[styles.label, { color: theme.text, marginTop: 20 }]}>Paper</Text>
+                  <View style={styles.chips}>
+                    {PAPERS.map((p) => (
+                      <Chip key={p.id} label={p.label} selected={paper === p.id} onPress={() => setPaper(p.id)} />
+                    ))}
+                  </View>
+                </>
+              )}
+
+              <View style={[styles.switchRow, { borderTopColor: theme.border }]}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={[styles.label, { color: theme.text }]}>Chalkboard</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>
+                    White lines on a dark background
+                  </Text>
+                </View>
+                <Switch
+                  value={chalk}
+                  onValueChange={setChalk}
+                  trackColor={{ false: theme.border, true: theme.text }}
+                  thumbColor={theme.bg}
+                />
+              </View>
 
               <Text style={[styles.label, { color: theme.text, marginTop: 20 }]}>Save as</Text>
               <View style={styles.chips}>
@@ -221,7 +264,7 @@ export default function Grayscale() {
               </View>
             </View>
 
-            <GradientButton label="Convert to Grayscale" onPress={onConvert} loading={busy} />
+            <GradientButton label="Create Sketch" onPress={onCreate} loading={busy} />
           </>
         )}
       </ScrollView>
@@ -266,6 +309,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: '700' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20, paddingTop: 16, borderTopWidth: 1 },
   statsRow: { flexDirection: 'row', gap: 12 },
   row: { flexDirection: 'row', gap: 12 },
 });

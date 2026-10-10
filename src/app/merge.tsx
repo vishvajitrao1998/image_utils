@@ -3,14 +3,14 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image, Pressable, ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image, Pressable, ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 
 import AppHeader from '../components/AppHeader';
@@ -192,7 +192,7 @@ export default function Merge() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="albums-outline" label="Edit again" onPress={() => setResult(null)} />
+              <OutlineButton icon="albums-outline" label="Edit Again" onPress={() => setResult(null)} />
               <OutlineButton icon="refresh-outline" label="Start over" onPress={onStartOver} />
             </View>
           </>

@@ -180,7 +180,7 @@ export default function Watermark() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="water-outline" label="Edit again" onPress={() => setResult(null)} />
+              <OutlineButton icon="water-outline" label="Edit Again" onPress={() => setResult(null)} />
               <OutlineButton icon="images-outline" label="New image" onPress={onPick} />
             </View>
           </>

@@ -78,7 +78,7 @@ export default function Compressor() {
         return;
       }
       await MediaLibrary.saveToLibraryAsync(result.uri);
-      Alert.alert('Saved', 'The compressed image was saved to your gallery.');
+      Alert.alert('Saved', 'Compressed Image is saved to your Gallery.');
     } catch {
       // Gallery saving isn't available in this environment, so fall back to the share sheet
       if (await Sharing.isAvailableAsync()) {

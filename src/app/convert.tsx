@@ -134,7 +134,7 @@ export default function Convert() {
         )}
 
         <GradientButton
-          label={result ? 'Convert again' : `Convert to ${targetLabel}`}
+          label={result ? 'Convert Again' : `Convert to ${targetLabel}`}
           onPress={onConvert}
           loading={busy}
           disabled={!original}

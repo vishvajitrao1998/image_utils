@@ -4,16 +4,16 @@ import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Image,
-    PixelRatio,
-    Pressable, ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
-    useWindowDimensions,
+  Alert,
+  Image,
+  PixelRatio,
+  Pressable, ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
@@ -207,7 +207,7 @@ export default function AddText() {
               <OutlineButton icon="share-outline" label="Share" onPress={() => shareImage(result.uri)} />
             </View>
             <View style={styles.row}>
-              <OutlineButton icon="text-outline" label="Edit again" onPress={() => setResult(null)} />
+              <OutlineButton icon="text-outline" label="Edit Again" onPress={() => setResult(null)} />
               <OutlineButton icon="images-outline" label="New image" onPress={onPick} />
             </View>
           </>
