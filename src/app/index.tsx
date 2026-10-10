@@ -48,7 +48,12 @@ export default function Splash() {
       </Animated.View>
 
       <Animated.View style={{ opacity: btnOpacity, marginTop: 40 }}>
-        <GradientButton label="Let's Start" onPress={() => router.replace('/home')} />
+      <GradientButton
+          label="Let's Start"
+          icon="arrow-forward"
+          iconPosition="right"
+          onPress={() => router.replace('/home')}
+        />
       </Animated.View>
     </View>
   );
